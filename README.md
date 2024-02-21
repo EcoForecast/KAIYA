@@ -1,5 +1,5 @@
 # KAIYA
 
-name:Yuhe Chang
-email:yhchang@bu.edu
-github user name: yuhechang
+name:Yuhe Chang \
+email:yhchang@bu.edu \
+github user name: yuhechang \
