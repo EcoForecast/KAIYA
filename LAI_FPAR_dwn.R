@@ -24,6 +24,7 @@ get.pkg("EML")
 get.pkg("cronR")
 get.pkg("tidyverse")
 
+# function for downloading LAI in HARV
 lai_download <- function(d){
   LAI_file = paste("MODIS.LAI.",d-4,'.',d,".HARV.RData", sep='')
   file_path = file.path(getwd(), 'LAI', LAI_file)
@@ -42,6 +43,7 @@ lai_download <- function(d){
   }
 }
 
+# function for downloading FPAR in HARV
 fpar_download <- function(d){
   FPAR_file = paste("MODIS.FPAR.",d-4,'.',d,".HARV.RData", sep='')
   file_path = file.path(getwd(), 'FPAR', FPAR_file)
