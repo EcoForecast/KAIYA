@@ -62,5 +62,5 @@ fpar_download <- function(d){
   }
 }
 
-lai_download(Sys.Date()-30)
-fpar_download(Sys.Date()-30)
+# lai_download(Sys.Date()-30)
+# fpar_download(Sys.Date()-30)
