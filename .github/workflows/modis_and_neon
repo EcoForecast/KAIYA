@@ -1,23 +1,4 @@
-on:
-  workflow_dispatch:
-  schedule:
-  - cron: "0 20 */4 * *"
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: eco4cast/rocker-neon4cast
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          
-# Point to the right path, run the right Rscript command
-      - name: Run automatic prediction file
-        run: Rscript Main.R
-        name: Neon Data Workflow
+name: Combined Workflow
 
 on:
   workflow_dispatch:
@@ -25,7 +6,7 @@ on:
     - cron: "0 20 * * *"
 
 jobs:
-  build:
+  build_modis:
     runs-on: ubuntu-latest
     container:
       image: eco4cast/rocker-neon4cast
@@ -34,6 +15,19 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          
-      - name: Run automatic prediction file
-        run: Rscript Main.R
+      - name: Run MODIS data retrieval
+        run: Rscript MODIS.R
+        name: MODIS Data Workflow
+
+  build_neon:
+    runs-on: ubuntu-latest
+    container:
+      image: eco4cast/rocker-neon4cast
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run NEON data retrieval
+        run: Rscript NEON.R
+        name: NEON Data Workflow
