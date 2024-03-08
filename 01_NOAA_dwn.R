@@ -1,6 +1,7 @@
 library(dplyr)
 library(lubridate)
 
+# function for updating the weather dataset
 weather_download <- function(datetime, siteid){
   ds <- neon4cast::noaa_stage3()
   df <- ds |> filter(datetime==datetime,
@@ -10,6 +11,7 @@ weather_download <- function(datetime, siteid){
 
 # temp = weather_download("2020-08-08", "HARV")
 
+# function for downloading the historical weather dataset
 weather_historical_download <- function(startdate, siteid){
   ds <- neon4cast::noaa_stage3()
   df <- ds |> filter(datetime >= lubridate::as_datetime(startdate),
