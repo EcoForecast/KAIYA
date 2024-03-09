@@ -87,10 +87,12 @@ PRCP = hist_met[hist_met$variable == "precipitation_flux",]
 plot(PRCP$datetime, PRCP$prediction, 'l', 
      main = 'Precipitaiton flux', xlab = 'Date', ylab = 'Precipitation')
 
+# air temperature
 AT = hist_met[hist_met$variable == "air_temperature",]
 plot(AT$datetime, AT$prediction, 'l',
      main = 'Air Temperature', xlab = 'Date', ylab = 'Air temperature')
 
+# downwelling shortwave radiation
 SW = hist_met[hist_met$variable == "surface_downwelling_shortwave_flux_in_air",]
 plot(SW$datetime, SW$prediction, 'l', 
      main = 'Downwelling Shortwave R', xlab = 'Date', ylab = 'Radiation')
