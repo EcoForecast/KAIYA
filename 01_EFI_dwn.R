@@ -17,11 +17,11 @@ download_site_meta <- function(){
   site_data %>% filter(as.integer(terrestrial) == 1)
 }
 
-# download target variable
-targets = download_targets()
-targets_nee = targets |> filter(variable=='nee')
-save(targets_nee, file = 'nee.RData')
-
-# download site metadata
-site_meta = download_site_meta()
-save(site_meta, file = 'site.RData')
+# # download target variable
+# targets = download_targets()
+# targets_nee = targets |> filter(variable=='nee')
+# save(targets_nee, file = 'nee.RData')
+# 
+# # download site metadata
+# site_meta = download_site_meta()
+# save(site_meta, file = 'site.RData')
