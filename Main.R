@@ -64,14 +64,14 @@ if(file.exists(filename)){} else {
 #   save(ds, file=filename)
 # }
 
-# # update met data for HARV as a test
-# siteid = "HARV"
-# load(paste0('./Data/', siteid, '.met.historical.RData'))
-# date_dwn = Sys.Date() - lubridate::days(1) # update data for 10 days ago
-# met = weather_download(date_dwn, siteid)
-# hist_met = rbind(hist_met, met)
-# filename = paste0('./Data/', siteid, '.met.historical.RData')
-# save(hist_met, file=filename)
+# update met data for HARV as a test
+siteid = "HARV"
+load(paste0('./Data/', siteid, '.met.historical.RData'))
+date_dwn = Sys.Date() # update data for today
+met = weather_download(date_dwn, siteid)
+hist_met = rbind(hist_met, met)
+filename = paste0('./Data/', siteid, '.met.historical.RData')
+save(hist_met, file=filename)
 
 ## time series plot of NEE for HARV
 load('./Data/nee.RData')
