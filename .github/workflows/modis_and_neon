@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run MODIS data retrieval
-        run: Rscript Main.R
+        run: Rscript Main.R modis
         name: MODIS Data Workflow
 
   build_neon:
@@ -29,5 +29,5 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run NEON data retrieval
-        run: Rscript Main.R
+        run: Rscript Main.R neon
         name: NEON Data Workflow
