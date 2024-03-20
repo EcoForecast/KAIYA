@@ -27,7 +27,7 @@ get.pkg("tidyverse")
 # function for downloading LAI in HARV
 lai_download <- function(d){
   LAI_file = paste("MODIS.LAI.",d-4,'.',d,".HARV.RData", sep='')
-  file_path = file.path(getwd(), 'LAI', LAI_file)
+  file_path = file.path(getwd(), 'Data', LAI_file)
   if(file.exists(file_path)){}
   else{
     subset <- MODISTools::mt_subset(product = "MCD15A3H",
@@ -46,7 +46,7 @@ lai_download <- function(d){
 # function for downloading FPAR in HARV
 fpar_download <- function(d){
   FPAR_file = paste("MODIS.FPAR.",d-4,'.',d,".HARV.RData", sep='')
-  file_path = file.path(getwd(), 'FPAR', FPAR_file)
+  file_path = file.path(getwd(), 'Data', FPAR_file)
   if(file.exists(file_path)){}
   else{
     subset <- MODISTools::mt_subset(product = "MCD15A3H",
