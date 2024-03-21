@@ -1,17 +1,19 @@
 library(lubridate)
 library(rjags)
 
-# Get target variable (NEE)
+# Set siteid
+siteid = 'HARV'
 
+# Get target variable (NEE)
 if(file.exists('./Data/nee.RData')) {
   load('./Data/nee.RData')
 } else if (file.exists("01_EFI_dwn.R")) {
   source("01_EFI_dwn.R")
   targets = download_targets()
-  targets_nee = targets |> filter(variable=='nee')
+  targets_nee = targets |> filter(variable=='nee' & site_id==siteid)
 }
 
-siteid = 'HARV'
+#### =============== Random walk ===============
 nee = targets_nee |> filter(site_id==siteid) ### |> filter(datetime<lubridate::date("2017-6-1"))
 nee$datetime = lubridate::as_datetime(nee$datetime)
 time = nee$datetime
@@ -79,3 +81,20 @@ ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975))
 # }
 # ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
 # points(time,y,pch="+",cex=0.2)
+
+# #### =============== Simple Dynamic Linear Model ===============
+# if(file.exists(paste0('./Data/', 'HARV', '.met.historical.RData'))) {
+#   load(paste0('./Data/', 'HARV', '.met.historical.RData'))
+# } else if (file.exists("01_NOAA_dwn.R")) {
+#   source("01_NOAA_dwn.R")
+#   hist_met = weather_historical_download("2017-01-01", siteid)
+# }
+# 
+# ## aggregation
+# hist_met_aggregated <- hist_met %>% 
+#   # mutate(datetime = lubridate::as_datetime(datetime)) %>% 
+#   group_by(datetime, site_id, variable) |> 
+#   summarize(prediction = mean(prediction),.groups = "drop") |> 
+#   select(datetime, site_id, variable, prediction)
+# 
+# air_temp <- hist_met_aggregated |> filter(variable=='air_temperature')
