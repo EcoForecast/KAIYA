@@ -117,7 +117,7 @@ devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
 # let's create a dataset that includes all of our variables that we can call it when fitting our model with JAGS
 # this first run we'll be using the EFI temperature data, which has hourly resolution, while the NEE data has half hourly resolution. For now, we'll match each half hour measurement to the corresponding hourly temperature
 # AT_half_hour <- list(parameter=rep(AT$parameter, each=2),datetime=as.POSIXlt(seq(from=as.POSIXct(AT$datetime[1]),to=as.POSIXct(AT$datetime[length(AT$datetime)]), by = "30 min")),variable=rep(AT$variable, each=2),prediction=rep(AT$prediction, each=2),site_id=rep(AT$site_id, each=2))
-#  let's match up the dates from the NEON temp data and the nee observations
+# let's match up the dates from the NEON temp data and the nee observations
 temp_and_nee <- merge(temp,nee,by='datetime')
 just_2022 <- dplyr::filter(temp_and_nee,format(datetime, "%Y") == "2022")
 data <- list(datetime=just_2022$datetime,nee=just_2022$observation,temp=just_2022$temp,     ## data
