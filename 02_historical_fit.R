@@ -74,7 +74,6 @@ out <- as.matrix(jags.out)         ## convert from coda to matrix
 x.cols <- grep("^x",colnames(out)) ## grab all columns that start with the letter x
 ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975))
 
-=======
 # plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="NEE",xlim=time[time.rng])
 # ## adjust x-axis label to be monthly if zoomed
 # if(diff(time.rng) < 100){ 

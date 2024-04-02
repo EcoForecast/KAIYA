@@ -4,6 +4,31 @@ library(lubridate)
 library(rMR)
 library(dplyr)
 
+## Meta Data
+team_info <- list(team_name = "KAIYA",
+                  team_list = list(
+                    list(individualName = list(givenName = "Katherine", 
+                                               surName = "Rein"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "krein21@bu.edu"),
+                    list(individualName = list(givenName = "Yuhe", 
+                                               surName = "Chang"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "yhchang@bu.edu"),
+                    list(individualName = list(givenName = "Ibbu", 
+                                               surName = "Quraishi"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "quraiibr@bu.edu"),
+                    list(individualName = list(givenName = "Amber", 
+                                               surName = "Crenna-Armstrong"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "acrennaa@bu.edu"),
+                    list(individualName = list(givenName = "Alex", 
+                                               surName = "Coast"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "amocast@bu.edu"))
+)
+
 ## Data downloads
 
 TODAYS_DATE = Sys.Date()
