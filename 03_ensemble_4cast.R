@@ -17,6 +17,7 @@ time2 = (NT*2+1):(NT*32)   ## forecast period
 ylim=c(-50,50)
 Nmc = 1000         ## set number of Monte Carlo draws
 N.cols <- c("black","red","green","blue","orange") ## set colors
+trans <- 0.8
 
 plot.run <- function(){
   plot(time,time,type='n',ylim=ylim,ylab="N")
@@ -121,3 +122,4 @@ ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3]
 ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
+
