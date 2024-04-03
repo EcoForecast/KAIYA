@@ -2,41 +2,38 @@ library(neon4cast)
 library(lubridate)
 # install.packages("rMR")
 library(rMR)
-library(dplyr)
 
 ## Data downloads
 
 TODAYS_DATE = Sys.Date()
 
 ## LAI and FPAR
-## time resolution of 
 
-if(file.exists("01_LAI_FPAR_dwn.R")){source("01_LAI_FPAR_dwn.R")}      
+if(file.exists("01_LAI_FPAR_dwn.R"))      
+  source("01_LAI_FPAR_dwn.R")
 
-lai = lai_download(TODAYS_DATE-30)
-fpar = fpar_download(TODAYS_DATE-30)
+lai_download(TODAYS_DATE-30)
+fpar_download(TODAYS_DATE-30)
 
 ## Temperature
-## time resolution of 1/2 hour
 
-if(file.exists("neontempdownload.R")){
-  source("neontempdownload.R")}
+if(file.exists("neontempdownload.R"))
+  source("neontempdownload.R")
 
 temp_data = temp_download(TODAYS_DATE)
 
 # Save data to a file
-temp_file = paste("NEON.Temp.","2018-01.",substr(TODAYS_DATE,0,7),".HARV.RData", sep='')
-temp_path = file.path(getwd(), 'Data',temp_file)
+temp_file = paste("NEON.Temp.","2018-01.",TODAYS_DATE,".HARV.RData", sep='')
+file_path = file.path(getwd(), temp_file)
 
-if(file.exists(temp_path)){}else{
-save(temp_data,file=temp_path)
+if(file.exists(file_path)){
+}else{
+save(subset,file=file_path)
 }
 
 ## EFI target variable
-## time resolution of 1/2 hour
-
-if(file.exists("01_EFI_dwn.R")){
-  source("01_EFI_dwn.R")}
+if(file.exists("01_EFI_dwn.R"))
+  source("01_EFI_dwn.R")
 
 targets = download_targets()
 targets_nee = targets |> filter(variable=='nee')
@@ -46,10 +43,8 @@ site_meta = download_site_meta()
 save(site_meta, file = './Data/site.RData')
 
 ## NOAA meteorological data
-## time resolution of hour
-
-if(file.exists("01_NOAA_dwn.R")){
-  source("01_NOAA_dwn.R")}
+if(file.exists("01_NOAA_dwn.R"))
+  source("01_NOAA_dwn.R")
 
 # download historical met data for HARV as a test
 
@@ -78,8 +73,6 @@ hist_met = rbind(hist_met, met)
 filename = paste0('./Data/', siteid, '.met.historical.RData')
 save(hist_met, file=filename)
 
-## load data, define variables, time series plots
-
 ## time series plot of NEE for HARV
 load('./Data/nee.RData')
 nee = targets_nee |> filter(site_id=='HARV')
@@ -92,7 +85,7 @@ load(paste0('./Data/', 'HARV', '.met.historical.RData'))
 # precipitation
 PRCP = hist_met[hist_met$variable == "precipitation_flux",]
 plot(PRCP$datetime, PRCP$prediction, 'l', 
-     main = 'Precipitation flux', xlab = 'Date', ylab = 'Precipitation')
+     main = 'Precipitaiton flux', xlab = 'Date', ylab = 'Precipitation')
 
 # air temperature
 AT = hist_met[hist_met$variable == "air_temperature",]
@@ -103,7 +96,3 @@ plot(AT$datetime, AT$prediction, 'l',
 SW = hist_met[hist_met$variable == "surface_downwelling_shortwave_flux_in_air",]
 plot(SW$datetime, SW$prediction, 'l', 
      main = 'Downwelling Shortwave R', xlab = 'Date', ylab = 'Radiation')
-
-# NEON temperature
-load('./Data/NEON.Temp.2018-01.2024-03.HARV.RData')
-temp = list(datetime = temp_data$startDateTime,temp = temp_data$tempTripleMean)
