@@ -2,6 +2,7 @@ library(neon4cast)
 library(lubridate)
 # install.packages("rMR")
 library(rMR)
+library(rjags)
 
 ## Data downloads
 
@@ -96,3 +97,7 @@ plot(AT$datetime, AT$prediction, 'l',
 SW = hist_met[hist_met$variable == "surface_downwelling_shortwave_flux_in_air",]
 plot(SW$datetime, SW$prediction, 'l', 
      main = 'Downwelling Shortwave R', xlab = 'Date', ylab = 'Radiation')
+
+# # Historical fit
+# if(file.exists("02_historical_fit.R"))      
+#   source("02_historical_fit.R")
