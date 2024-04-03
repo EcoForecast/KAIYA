@@ -74,15 +74,16 @@ out <- as.matrix(jags.out)         ## convert from coda to matrix
 x.cols <- grep("^x",colnames(out)) ## grab all columns that start with the letter x
 ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975))
 
-plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="NEE",xlim=time[time.rng])
-## adjust x-axis label to be monthly if zoomed
-if(diff(time.rng) < 100){
-  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
-}
-ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
-points(time,y,pch="+",cex=0.2)
-
-# #### =============== Simple Dynamic Linear Model ===============
+=======
+  # plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="NEE",xlim=time[time.rng])
+  # ## adjust x-axis label to be monthly if zoomed
+  # if(diff(time.rng) < 100){ 
+  #   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
+  # }
+  # ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+  # points(time,y,pch="+",cex=0.2)
+  
+  # #### =============== Simple Dynamic Linear Model ===============
 # if(file.exists(paste0('./Data/', 'HARV', '.met.historical.RData'))) {
 #   load(paste0('./Data/', 'HARV', '.met.historical.RData'))
 # } else if (file.exists("01_NOAA_dwn.R")) {
@@ -98,3 +99,49 @@ points(time,y,pch="+",cex=0.2)
 #   select(datetime, site_id, variable, prediction)
 # 
 # air_temp <- hist_met_aggregated |> filter(variable=='air_temperature')
+
+plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="NEE",xlim=time[time.rng])
+## adjust x-axis label to be monthly if zoomed
+if(diff(time.rng) < 100){ 
+  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
+}
+ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+points(time,y,pch="+",cex=0.2)
+
+# Historical time-series fit -- linear model, HARV site
+
+# we'll be using the ecoforecast tool, so let's install that, and load the rjags library in case we need it
+library(rjags)
+devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
+
+# let's create a dataset that includes all of our variables that we can call it when fitting our model with JAGS
+# this first run we'll be using the EFI temperature data, which has hourly resolution, while the NEE data has half hourly resolution. For now, we'll match each half hour measurement to the corresponding hourly temperature
+# AT_half_hour <- list(parameter=rep(AT$parameter, each=2),datetime=as.POSIXlt(seq(from=as.POSIXct(AT$datetime[1]),to=as.POSIXct(AT$datetime[length(AT$datetime)]), by = "30 min")),variable=rep(AT$variable, each=2),prediction=rep(AT$prediction, each=2),site_id=rep(AT$site_id, each=2))
+# let's match up the dates from the NEON temp data and the nee observations
+temp_and_nee <- merge(temp,nee,by='datetime')
+just_2022 <- dplyr::filter(temp_and_nee,format(datetime, "%Y") == "2022")
+data <- list(datetime=just_2022$datetime,nee=just_2022$observation,temp=just_2022$temp,     ## data
+             nee_ic=just_2022$observation[1],tau_ic=100, ## initial condition prior
+             a_obs=1,r_obs=1,           ## obs error prior
+             a_add=1,r_add=1            ## process error prior
+)
+
+# now, let's use the ecoforecast package to run JAGS with a simple version of our model
+nee.out <- ecoforecastR::fit_dlm(model=list(obs="nee",fixed="~ 1 + X + temp"),data)
+params <- window(nee.out$params,start=1000) ## remove burn-in
+plot(params)
+summary(params)
+cor(as.matrix(params))
+pairs(as.matrix(params))
+
+# now, we'll plot the data with the model and ci:
+## confidence interval
+out <- as.matrix(nee.out$predict)
+ci <- apply(out,2,quantile,c(0.025,0.5,0.975))
+plot(just_2022$datetime,ci[2,],type='n',xlab='date',ylim=c(-10,10),ylab="NEE")
+ecoforecastR::ciEnvelope(just_2022$datetime,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+points(just_2022$datetime,just_2022$observation,pch="+",cex=0.5)
+
+# a more complicated version:
+# model <- ecoforecastR::ParseFixed("1 + AT + exp(-k*LAI*SW))
+# where we predict nee and k?
