@@ -125,13 +125,13 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-result_df <- data.frame(matrix(ncol = 8, nrow = 0))
-col_names = c('model_id', 'datetime', 'reference_datetime', 'site_id', 'family', 'parameter', 'variable', 'prediction')
+result_df <- data.frame(matrix(ncol = 10, nrow = 0))
+col_names = c('project_id','duration','model_id', 'datetime', 'reference_datetime', 'site_id', 'family', 'parameter', 'variable', 'prediction')
 colnames(result_df) <- col_names
 
 for(i in 1:(30*NT)){
   for(parameter in 1:10){
-    result_df[nrow(result_df)+1,]=c('kaiya', 
+    result_df[nrow(result_df)+1,]=c('neon4cast','PT30','kaiya', 
                                     combine_df$datetime[nrow(combine_df)-30*NT+i], 
                                     combine_df$datetime[nrow(combine_df)-30*NT], 
                                     'HARV', 
@@ -141,3 +141,30 @@ for(i in 1:(30*NT)){
                                     sample(N.IPDE[,i], 1))
   }
 }
+
+team_info <- list(team_name = "KAIYA",
+                  team_list = list(
+                    list(individualName = list(givenName = "Katherine", 
+                                               surName = "Rein"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "krein21@bu.edu"),
+                    list(individualName = list(givenName = "Yuhe", 
+                                               surName = "Chang"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "yhchang@bu.edu"),
+                    list(individualName = list(givenName = "Ibbu", 
+                                               surName = "Quraishi"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "quraiibr@bu.edu"),
+                    list(individualName = list(givenName = "Amber", 
+                                               surName = "Crenna-Armstrong"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "acrennaa@bu.edu"),
+                    list(individualName = list(givenName = "Alex", 
+                                               surName = "Coast"),
+                         organizationName = "Boston University",
+                         electronicMailAddress = "amocast@bu.edu"))
+)
+
+# submission = false for now
+submit_forecast(result_df,team_info,submit=FALSE)
