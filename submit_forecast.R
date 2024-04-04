@@ -1,3 +1,5 @@
+library(ecoforecastR)
+library(lubridate)
 ##' Save forecast and metadata to file, submit forecast to EFI
 ##' @param forecast dataframe
 ##' @param team_info list, see example
@@ -7,13 +9,13 @@ submit_forecast <- function(forecast,team_info,submit=FALSE){
   
   #Forecast output file name in standards requires for Challenge.  
   # csv.gz means that it will be compressed
-  forecast_file <- paste0("aquatics","-",min(forecast$reference_datetime),"-",team_info$team_name,".csv.gz")
+  forecast_file <- paste0("aquatics","-",date(min(forecast$reference_datetime)),"-",team_info$team_name,".csv.gz")
   
   ## final format tweaks for submission
-  forecast = forecast |> mutate(model_id = team_info$team_name, family="ensemble") |>
-    relocate(model_id,reference_datetime) |>
-    relocate(parameter,.before = variable) |>
-    relocate(family,.before = parameter)
+  # forecast = forecast |> mutate(model_id = team_info$team_name, family="ensemble") |>
+  #   relocate(model_id,reference_datetime) |>
+  #   relocate(parameter,.before = variable) |>
+  #   relocate(family,.before = parameter)
   
   #Write csv to disk
   write_csv(forecast, forecast_file)
@@ -57,10 +59,10 @@ submit_forecast <- function(forecast,team_info,submit=FALSE){
   )
   
   ## this function needs to be restored
-  metadata_file <- neon4cast::generate_metadata(forecast_file, team_info$team_list, model_metadata)
+  # metadata_file <- neon4cast::generate_metadata(forecast_file, team_info$team_list, model_metadata)
   
   if(submit){
-    neon4cast::submit(forecast_file = forecast_file, ask = FALSE) #metadata = metadata_file,
+    neon4cast::submit(forecast_file = forecast_file, metadata = model_metadata, ask = FALSE) #metadata = metadata_file,
   }
   
 }
