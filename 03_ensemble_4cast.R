@@ -1,4 +1,6 @@
 library(ecoforecastR)
+library(dplyr)
+library(tidyverse)
 
 if(file.exists('./Data/combined.csv')) {
   combine_df = read.csv('./Data/combined.csv')[-1]
@@ -42,7 +44,7 @@ forecastN <- function(IC, temperature, intercept, betax, betatemp, Q=0, n=Nmc){
 ## calculate mean of all inputs
 temp_ensemble <- matrix(NA, 50, (30*NT))
 for(i in 1:(30*NT)){
-  temp_ensemble[,i] <- rnorm(50, combine_df$temp[i], combine_df$var[i])
+  temp_ensemble[,i] <- rnorm(50, combine_df$temp[i+nrow(combine_df)-30*NT], combine_df$var[i+nrow(combine_df)-30*NT])
 }
 temp.mean <- matrix(apply(temp_ensemble, 2, mean),1,(30*NT)) ## driver for two days
 ## parameters
@@ -123,3 +125,19 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
+result_df <- data.frame(matrix(ncol = 8, nrow = 0))
+col_names = c('model_id', 'datetime', 'reference_datetime', 'site_id', 'family', 'parameter', 'variable', 'prediction')
+colnames(result_df) <- col_names
+
+for(i in 1:(30*NT)){
+  for(parameter in 1:10){
+    result_df[nrow(result_df)+1,]=c('kaiya', 
+                                    combine_df$datetime[nrow(combine_df)-30*NT+i], 
+                                    combine_df$datetime[nrow(combine_df)-30*NT], 
+                                    'HARV', 
+                                    'ensemble',
+                                    parameter,
+                                    'nee',
+                                    sample(N.IPDE[,i], 1))
+  }
+}
