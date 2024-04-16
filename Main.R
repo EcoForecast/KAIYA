@@ -126,3 +126,8 @@ plot(SW$datetime, SW$prediction, 'l',
 # # Historical fit
 # if(file.exists("02_historical_fit.R"))      
 #   source("02_historical_fit.R")
+
+# Ensemble Forecast
+
+if(file.exists("03_ensemble_4cast.R"))      
+  source("03_ensemble_4cast.R")
