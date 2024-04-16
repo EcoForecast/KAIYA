@@ -1,7 +1,7 @@
 library(neon4cast)
 library(lubridate)
 # install.packages("rMR")
-library(rMR)
+# library(rMR)
 library(rjags)
 
 ## Meta Data
