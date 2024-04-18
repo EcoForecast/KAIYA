@@ -21,6 +21,30 @@ weather_historical_download <- function(startdate, siteid){
   return(df)
 }
 
+noaa_mean_forecast <- function(site, var, reference_date) {
+  endpoint <- "data.ecoforecast.org"
+  bucket <- glue::glue("neon4cast-drivers/noaa/gefs-v12/stage2/parquet/0/{reference_date}")
+  s3 <- arrow::s3_bucket(bucket, endpoint_override = endpoint, anonymous = TRUE)
+
+  ds <- arrow::open_dataset(s3)
+
+  forecast_date <- as_datetime(reference_date)
+
+  # Filter, select, and process data
+  ds %>%
+    dplyr::filter(site_id == site,
+                  datetime >= forecast_date,
+                  variable == var) %>%
+    dplyr::select(datetime, prediction, parameter) %>%
+    dplyr::group_by(datetime) %>%
+    dplyr::summarize(mean_prediction = mean(prediction-273.15, na.rm = TRUE), 
+                     sd_prediction = sd(prediction-273.15, na.rm = TRUE), 
+                     ensemble=max(parameter)) %>%
+    dplyr::select(datetime, mean_prediction, sd_prediction, ensemble) %>%
+    dplyr::collect()
+}
+
+
 # variables included in the NOAA weather dataset
 # variables <- c("surface_downwelling_longwave_flux_in_air", 
 #                "surface_downwelling_shortwave_flux_in_air",
