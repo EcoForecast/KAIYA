@@ -2,38 +2,67 @@ library(ecoforecastR)
 library(dplyr)
 library(tidyverse)
 
-if(file.exists('./Data/combined.csv')) {
-  combine_df = read.csv('./Data/combined.csv')[-1]
+# if(file.exists('./Data/combined.csv')) {
+#   combine_df = read.csv('./Data/combined.csv')[-1]
+# }
+# if(file.exists('./Data/sim_lin_params.csv')) {
+#   params = read.csv('./Data/sim_lin_params.csv')[-1]
+# }
+
+if(file.exists('./Data/combined.RData')) {
+  load('./Data/combined.RData')
 }
-if(file.exists('./Data/sim_lin_params.csv')) {
-  params = read.csv('./Data/sim_lin_params.csv')[-1]
+if(file.exists('./Data/sim_lin_params.RData')) {
+  load('./Data/sim_lin_params.RData')
 }
-if(file.exists('./Data/sim_lin_predicts.csv')) {
-  last32days = read.csv('./Data/sim_lin_predicts.csv')[-1]
+if(file.exists('./Data/sim_lin_ci.RData')) {
+  load('./Data/sim_lin_ci.RData')
+  }
+
+#### Download temperature forecast
+if(file.exists("01_NOAA_dwn.R"))
+  source("01_NOAA_dwn.R")
+
+temp_forecast = noaa_forecast_download("HARV","air_temperature",Sys.Date()-80)
+temp_forecast$datetime = as_datetime(temp_forecast$datetime)
+
+#### Convert hourly to half-hourly
+semi_hourly_times = c()
+mean_predictions = c()
+sd_predictions = c()
+for(i in 1:length(temp_forecast$datetime)){
+  semi_hourly_times = c(semi_hourly_times, lubridate::as_datetime(temp_forecast$datetime[i]), lubridate::as_datetime(temp_forecast$datetime[i]+30*60))
+  mean_predictions = c(mean_predictions, temp_forecast$mean_prediction[i], temp_forecast$mean_prediction[i])
+  sd_predictions = c(sd_predictions, temp_forecast$sd_prediction[i], temp_forecast$sd_prediction[i])
 }
 
+temp_forecast = data.frame(
+  datetime = lubridate::as_datetime(semi_hourly_times),
+  mean_prediction = mean_predictions,
+  sd_prediction = sd_predictions
+)
+
 NT = 48
-time = 1:(NT*32)    ## total time
+time = 1:(NT*2 + nrow(temp_forecast))    ## total time
 time1 = 1:(NT*2)       ## calibration period
-time2 = (NT*2+1):(NT*32)   ## forecast period
-ylim=c(-50,50)
+time2 = (NT*2+1):(NT*2 + nrow(temp_forecast))   ## forecast period
+ylim=c(-20,20)
 Nmc = 1000         ## set number of Monte Carlo draws
 N.cols <- c("black","red","green","blue","orange") ## set colors
-trans <- 0.8
+trans <- 0.5
 
 plot.run <- function(){
   plot(time,time,type='n',ylim=ylim,ylab="N")
-  ecoforecastR::ciEnvelope(time1,ci[1,],ci[3,],col=col.alpha("lightBlue",0.6))
-  lines(time1,ci[2,],col="blue")
+  ecoforecastR::ciEnvelope(time1,filtered_ci[1,],filtered_ci[3,],col=col.alpha("lightBlue",0.6))
+  lines(time1,filtered_ci[2,],col="blue")
   # points(time1,last2days[s,])
 }
-ci <- apply(last32days[,1:96],2,quantile,c(0.025,0.5,0.975))
 plot.run()
 
 forecastN <- function(IC, temperature, intercept, betax, betatemp, Q=0, n=Nmc){
-  N <- matrix(NA,n,(30*NT))  ## storage
+  N <- matrix(NA,n,(nrow(temp_forecast)))  ## storage
   Nprev <- IC           ## initialize
-  for(t in 1:(30*NT)){
+  for(t in 1:(nrow(temp_forecast))){
     mu = intercept + Nprev*(1+betax) + temperature[,t]*betatemp
     N[,t] <- rnorm(n,mu,Q)                         ## predict next step
     Nprev <- N[,t]                                  ## update IC
@@ -42,14 +71,14 @@ forecastN <- function(IC, temperature, intercept, betax, betatemp, Q=0, n=Nmc){
 }
 
 ## calculate mean of all inputs
-temp_ensemble <- matrix(NA, 50, (30*NT))
-for(i in 1:(30*NT)){
-  temp_ensemble[,i] <- rnorm(50, combine_df$temp[i+nrow(combine_df)-30*NT], combine_df$var[i+nrow(combine_df)-30*NT])
+temp_ensemble <- matrix(NA, 2000, (nrow(temp_forecast)))
+for(i in 1:(nrow(temp_forecast))){
+  temp_ensemble[,i] <- rnorm(50, temp_forecast$mean_prediction[i], temp_forecast$sd_prediction[i])
 }
-temp.mean <- matrix(apply(temp_ensemble, 2, mean),1,(30*NT)) ## driver for two days
+temp.mean <- matrix(apply(temp_ensemble, 2, mean),1,(nrow(temp_forecast)))
 ## parameters
 param.mean <- apply(params,2,mean)
-IC <- as.matrix(last32days[,96])
+load('./Data/sim_lin_IC.RData')
 
 #### Deterministic Forecast
 N.det <- forecastN(IC=mean(IC),
@@ -63,7 +92,7 @@ lines(time2,N.det,col="purple",lwd=3)
 
 #### Initial Condition uncertainty
 prow = sample.int(nrow(params),Nmc,replace=TRUE)
-N.I <- forecastN(IC=IC[prow,],
+N.I <- forecastN(IC=IC[prow],
                  temperature=temp.mean,
                  intercept=param.mean["betaIntercept"],
                  betax=param.mean["betaX"],
@@ -76,7 +105,7 @@ ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],tra
 lines(time2,N.I.ci[2,],lwd=0.5)
 
 #### Parameter uncertainty
-N.IP <- forecastN(IC=IC[prow,],
+N.IP <- forecastN(IC=IC[prow],
                   temperature=temp.mean,
                   intercept=params[prow, "betaIntercept"],
                   betax=params[prow,"betaX"],
@@ -92,7 +121,7 @@ lines(time2,N.I.ci[2,],lwd=0.5)
 
 #### Driver uncertainty
 drow = sample.int(nrow(temp_ensemble),Nmc,replace=TRUE)
-N.IPD <- forecastN(IC=IC[prow,],
+N.IPD <- forecastN(IC=IC[prow],
                    temperature=temp_ensemble[drow,],
                    intercept=params[prow, "betaIntercept"],
                    betax=params[prow,"betaX"],
@@ -109,7 +138,7 @@ lines(time2,N.I.ci[2,],lwd=0.5)
 
 #### process error samples
 Qmc <- 1/sqrt(params[prow,"tau_add"])  ## convert from precision to standard deviation
-N.IPDE <- forecastN(IC=IC[prow,],
+N.IPDE <- forecastN(IC=IC[prow],
                     temperature=temp_ensemble[drow,],
                     intercept=params[prow, "betaIntercept"],
                     betax=params[prow,"betaX"],
@@ -129,11 +158,11 @@ result_df <- data.frame(matrix(ncol = 10, nrow = 0))
 col_names = c('project_id','duration','model_id', 'datetime', 'reference_datetime', 'site_id', 'family', 'parameter', 'variable', 'prediction')
 colnames(result_df) <- col_names
 
-for(i in 1:(30*NT)){
-  for(parameter in 1:10){
+for(i in 1:(nrow(temp_forecast))){
+  for(parameter in 1:30){
     result_df[nrow(result_df)+1,]=c('neon4cast','PT30','kaiya', 
-                                    combine_df$datetime[nrow(combine_df)-30*NT+i], 
-                                    combine_df$datetime[nrow(combine_df)-30*NT], 
+                                    as.character(temp_forecast$datetime[i]), 
+                                    as.character(combine_df$datetime[nrow(combine_df)]), 
                                     'HARV', 
                                     'ensemble',
                                     parameter,
@@ -167,5 +196,5 @@ team_info <- list(team_name = "KAIYA",
 )
 
 # submission = false for now
-
-submit_forecast(result_df,team_info,submit=FALSE)
+source('./submit_forecast.R')
+submit_forecast(result_df,team_info,submit=TRUE)
