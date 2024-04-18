@@ -11,7 +11,7 @@ if(file.exists('./Data/nee.RData')) {
 } else if (file.exists("01_EFI_dwn.R")) {
   source("01_EFI_dwn.R")
   targets = download_targets()
-  targets_nee = targets |> filter(variable=='nee')
+  targets_nee = targets |> filter(variable=='nee') |> filter(site_id==siteid)
 }
 
 #### =============== Random walk =============== 
