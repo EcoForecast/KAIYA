@@ -13,15 +13,27 @@ weather_download <- function(selectdate, siteid){
 # temp = weather_download("2023-08-08", "HARV")
 
 # function for downloading the historical weather dataset
-weather_historical_download <- function(startdate, siteid){
+noaa_historical_download <- function(site, var, reference_date){
   ds <- neon4cast::noaa_stage3()
-  df <- ds |> filter(datetime >= lubridate::as_datetime(startdate),
-                     site_id == siteid) |>
-    collect()
-  return(df)
+  # df <- ds |> filter(datetime >= lubridate::as_datetime(startdate),
+  #                    site_id == siteid)
+  
+  historical_date <- as_datetime(reference_date)
+  
+  ds %>%
+    dplyr::filter(site_id == site,
+                  datetime >= historical_date,
+                  variable == var) %>%
+    dplyr::select(datetime, prediction, parameter) %>%
+    dplyr::group_by(datetime) %>%
+    dplyr::summarize(mean_prediction = mean(prediction-273.15, na.rm = TRUE), 
+                     sd_prediction = sd(prediction-273.15, na.rm = TRUE), 
+                     ensemble=max(parameter)) %>%
+    dplyr::select(datetime, mean_prediction, sd_prediction, ensemble) %>%
+    dplyr::collect()
 }
 
-noaa_mean_forecast <- function(site, var, reference_date) {
+noaa_forecast_download <- function(site, var, reference_date) {
   endpoint <- "data.ecoforecast.org"
   bucket <- glue::glue("neon4cast-drivers/noaa/gefs-v12/stage2/parquet/0/{reference_date}")
   s3 <- arrow::s3_bucket(bucket, endpoint_override = endpoint, anonymous = TRUE)
