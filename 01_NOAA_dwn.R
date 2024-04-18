@@ -24,7 +24,7 @@ noaa_historical_download <- function(site, var, reference_date, end_date){
   ds %>%
     dplyr::filter(site_id == site,
                   datetime >= historical_start_date,
-                  datetime <= historical_end_date,
+                  datetime < historical_end_date,
                   variable == var) %>%
     dplyr::select(datetime, prediction, parameter) %>%
     dplyr::group_by(datetime) %>%
