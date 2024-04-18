@@ -6,9 +6,15 @@ library(dplyr)
 siteid = 'HARV'
 
 # Get target variable (NEE)
-if(file.exists('./Data/nee.RData')) {
-  load('./Data/nee.RData')
-} else if (file.exists("01_EFI_dwn.R")) {
+# if(file.exists('./Data/nee.RData')) {
+#   load('./Data/nee.RData')
+# } else if (file.exists("01_EFI_dwn.R")) {
+#   source("01_EFI_dwn.R")
+#   targets = download_targets()
+#   targets_nee = targets |> filter(variable=='nee') |> filter(site_id==siteid)
+# }
+
+if (file.exists("01_EFI_dwn.R")) {
   source("01_EFI_dwn.R")
   targets = download_targets()
   targets_nee = targets |> filter(variable=='nee') |> filter(site_id==siteid)
