@@ -13,16 +13,18 @@ weather_download <- function(selectdate, siteid){
 # temp = weather_download("2023-08-08", "HARV")
 
 # function for downloading the historical weather dataset
-noaa_historical_download <- function(site, var, reference_date){
+noaa_historical_download <- function(site, var, reference_date, end_date){
   ds <- neon4cast::noaa_stage3()
   # df <- ds |> filter(datetime >= lubridate::as_datetime(startdate),
   #                    site_id == siteid)
   
-  historical_date <- as_datetime(reference_date)
+  historical_start_date <- as_datetime(reference_date)
+  historical_end_date <- as_datetime(end_date)
   
   ds %>%
     dplyr::filter(site_id == site,
-                  datetime >= historical_date,
+                  datetime >= historical_start_date,
+                  datetime <= historical_end_date,
                   variable == var) %>%
     dplyr::select(datetime, prediction, parameter) %>%
     dplyr::group_by(datetime) %>%
