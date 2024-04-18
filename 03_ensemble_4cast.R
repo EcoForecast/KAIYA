@@ -167,4 +167,5 @@ team_info <- list(team_name = "KAIYA",
 )
 
 # submission = false for now
+
 submit_forecast(result_df,team_info,submit=FALSE)

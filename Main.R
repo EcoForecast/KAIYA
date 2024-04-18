@@ -123,11 +123,25 @@ SW = hist_met[hist_met$variable == "surface_downwelling_shortwave_flux_in_air",]
 plot(SW$datetime, SW$prediction, 'l', 
      main = 'Downwelling Shortwave R', xlab = 'Date', ylab = 'Radiation')
 
-# # Historical fit
-# if(file.exists("02_historical_fit.R"))      
-#   source("02_historical_fit.R")
+# Historical fit
+if(file.exists("02_historical_fit.R"))
+  source("02_historical_fit.R")
+
+plot(temp_and_nee$datetime,ci[2,],type='n',xlab='date',ylim=c(-10,10),ylab="NEE")
+ecoforecastR::ciEnvelope(temp_and_nee$datetime,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+points(temp_and_nee$datetime,temp_and_nee$observation,pch="+",cex=0.5)
 
 # Ensemble Forecast
 
 if(file.exists("03_ensemble_4cast.R"))      
   source("03_ensemble_4cast.R")
+plot.run()
+N.IPDE.ci = apply(N.IPDE,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
+ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+
+
+
