@@ -14,70 +14,70 @@ if(file.exists('./Data/nee.RData')) {
   targets_nee = targets |> filter(variable=='nee') |> filter(site_id==siteid)
 }
 
-#### =============== Random walk =============== 
-nee = targets_nee |> filter(site_id==siteid)
-minDate = '2023-1-1'
-maxDate = NULL
-if(!is.null(minDate)) nee |> filter(datetime>lubridate::date(minDate))
-if(!is.null(maxDate)) nee |> filter(datetime<lubridate::date(maxDate))
-write.csv(nee, paste0('./Data/nee.', siteid, '.csv'))
-
-nee$datetime = lubridate::as_datetime(nee$datetime)
-time = nee$datetime
-y = nee$observation
-n_max = length(y)
-
-RandomWalk = "
-  model{
-
-    #### Data Model
-    for(t in 1:n){
-      y[t] ~ dnorm(x[t],tau_obs)
-    }
-
-    #### Process Model
-    for(t in 2:n){
-      x[t]~dnorm(x[t-1],tau_add)
-    }
-
-    #### Priors
-    x[1] ~ dnorm(x_ic,tau_ic)
-    tau_obs ~ dgamma(a_obs,r_obs)
-    tau_add ~ dgamma(a_add,r_add)
-  }
-  "
-data <- list(y=y,n=length(y),      ## data
-             x_ic=y[1],tau_ic=100,         ## initial condition prior
-             a_obs=1,r_obs=1,                   ## obs error prior
-             a_add=1,r_add=1                    ## process error prior
-)
-
-nchain = 3
-init <- list()
-for(i in 1:nchain){
-  y.samp =sample(y,length(y),replace=TRUE)
-  init[[i]] <- list(tau_add=1/var(diff(y.samp)),  ## initial guess on process precision
-                    tau_obs=5/var(y.samp))        ## initial guess on obs precision
-}
-
-j.model   <- jags.model (file = textConnection(RandomWalk),
-                         data = data,
-                         inits = init,
-                         n.chains = 3)
-
-jags.out   <- coda.samples (model = j.model,
-                            variable.names = c("tau_add","tau_obs"),
-                            n.iter = 1000)
-plot(jags.out)
-
-jags.out   <- coda.samples (model = j.model,
-                            variable.names = c("x","tau_add","tau_obs"),
-                            n.iter = 5000)
-
-time.rng = c(1,length(time))       ## adjust to zoom in and out
-out <- as.matrix(jags.out)         ## convert from coda to matrix
-x.cols <- grep("^x",colnames(out)) ## grab all columns that start with the letter x
-ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975))
+# #### =============== Random walk =============== 
+# nee = targets_nee |> filter(site_id==siteid)
+# minDate = '2023-1-1'
+# maxDate = NULL
+# if(!is.null(minDate)) nee |> filter(datetime>lubridate::date(minDate))
+# if(!is.null(maxDate)) nee |> filter(datetime<lubridate::date(maxDate))
+# write.csv(nee, paste0('./Data/nee.', siteid, '.csv'))
+# 
+# nee$datetime = lubridate::as_datetime(nee$datetime)
+# time = nee$datetime
+# y = nee$observation
+# n_max = length(y)
+# 
+# RandomWalk = "
+#   model{
+# 
+#     #### Data Model
+#     for(t in 1:n){
+#       y[t] ~ dnorm(x[t],tau_obs)
+#     }
+# 
+#     #### Process Model
+#     for(t in 2:n){
+#       x[t]~dnorm(x[t-1],tau_add)
+#     }
+# 
+#     #### Priors
+#     x[1] ~ dnorm(x_ic,tau_ic)
+#     tau_obs ~ dgamma(a_obs,r_obs)
+#     tau_add ~ dgamma(a_add,r_add)
+#   }
+#   "
+# data <- list(y=y,n=length(y),      ## data
+#              x_ic=y[1],tau_ic=100,         ## initial condition prior
+#              a_obs=1,r_obs=1,                   ## obs error prior
+#              a_add=1,r_add=1                    ## process error prior
+# )
+# 
+# nchain = 3
+# init <- list()
+# for(i in 1:nchain){
+#   y.samp =sample(y,length(y),replace=TRUE)
+#   init[[i]] <- list(tau_add=1/var(diff(y.samp)),  ## initial guess on process precision
+#                     tau_obs=5/var(y.samp))        ## initial guess on obs precision
+# }
+# 
+# j.model   <- jags.model (file = textConnection(RandomWalk),
+#                          data = data,
+#                          inits = init,
+#                          n.chains = 3)
+# 
+# jags.out   <- coda.samples (model = j.model,
+#                             variable.names = c("tau_add","tau_obs"),
+#                             n.iter = 1000)
+# plot(jags.out)
+# 
+# jags.out   <- coda.samples (model = j.model,
+#                             variable.names = c("x","tau_add","tau_obs"),
+#                             n.iter = 5000)
+# 
+# time.rng = c(1,length(time))       ## adjust to zoom in and out
+# out <- as.matrix(jags.out)         ## convert from coda to matrix
+# x.cols <- grep("^x",colnames(out)) ## grab all columns that start with the letter x
+# ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975))
 
 # plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="NEE",xlim=time[time.rng])
 # ## adjust x-axis label to be monthly if zoomed
