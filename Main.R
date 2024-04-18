@@ -127,9 +127,9 @@ plot(SW$datetime, SW$prediction, 'l',
 if(file.exists("02_historical_fit.R"))
   source("02_historical_fit.R")
 
-plot(temp_and_nee$datetime,ci[2,],type='n',xlab='date',ylim=c(-10,10),ylab="NEE")
-ecoforecastR::ciEnvelope(temp_and_nee$datetime,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
-points(temp_and_nee$datetime,temp_and_nee$observation,pch="+",cex=0.5)
+plot(combine_df$datetime,ci[2,],type='n',xlab='date',ylim=c(-10,10),ylab="NEE")
+ecoforecastR::ciEnvelope(combine_df$datetime,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+points(combine_df$datetime,combine_df$observation,pch="+",cex=0.5)
 
 # Ensemble Forecast
 
