@@ -109,7 +109,7 @@ ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975))
 if(file.exists("01_NOAA_dwn.R"))
   source("01_NOAA_dwn.R")
 
-temp_data = noaa_historical_download("HARV","air_temperature",Sys.Date()-365) # dated this way in order to get all data a year before today, this can be changed
+temp_data = noaa_historical_download("HARV","air_temperature",Sys.Date()-80-365, Sys.Date()-80) # dated this way in order to get all data a year before today, this can be changed
 
 ## the following is leftover from when we were using EFI temp data
 # temp_data = temp_data[c('mean_prediction', 'sd_prediction')] |> rename(
@@ -142,24 +142,25 @@ temp_half_hour = data.frame(
 # Historical time-series fit -- linear model, HARV site
 
 # let's match up the dates from the NEON temp data and the nee observations
-temp_and_nee <- merge(temp_half_hour,targets_nee,by='datetime')
+# temp_and_nee <- merge(temp_half_hour,targets_nee,by='datetime')
+combine_df <- merge(temp_half_hour,targets_nee,by='datetime')
 
 # the following was a way to filter the data by year, if needed
 # > filter(datetime>lubridate::date('2022-01-01'))
 # just_2022 <- dplyr::filter(temp_and_nee,format(datetime, "%Y") == "2022")
 
-data <- list(datetime=temp_and_nee$datetime,nee=temp_and_nee$observation,temp=temp_and_nee$mean_prediction,     ## data
-             nee_ic=temp_and_nee$observation[1],tau_ic=100, ## initial condition prior
+data <- list(datetime=combine_df$datetime,nee=combine_df$observation,temp=combine_df$mean_prediction,     ## data
+             nee_ic=combine_df$observation[1],tau_ic=100, ## initial condition prior
              a_obs=1,r_obs=1,           ## obs error prior
              a_add=1,r_add=1            ## process error prior
 )
-write.csv(temp_and_nee, './Data/combined.csv')
+save(combine_df, file=file.path(getwd(), '/Data/combined.RData'))
 
 # now, let's use the ecoforecast package to run JAGS with a simple version of our model
-nee.out <- ecoforecastR::fit_dlm(model=list(obs="nee",fixed="~ 1 + X + temp",n.iter=20000),data)
+nee.out <- ecoforecastR::fit_dlm(model=list(obs="nee",fixed="~ 1 + X + temp",n.iter=10000),data)
 strsplit(nee.out$model,"\n",fixed = TRUE)[[1]] ## so we can verify what the JAGS code should look like
-params <- window(nee.out$params,start=10000) ## remove burn-in
-predicts <- window(nee.out$predict, start=10000)
+params <- window(nee.out$params,start=5000) ## remove burn-in
+predicts <- window(nee.out$predict, start=5000)
 plot(params)
 summary(params)
 cor(as.matrix(params))
@@ -168,14 +169,18 @@ pairs(as.matrix(params))
 # now, we'll plot the data with the model and ci:
 ## confidence interval
 out <- as.matrix(predicts)
-# write.csv(out[,(ncol(out)-32*48+1):ncol(out)], './Data/sim_lin_predicts.csv')
+IC = out[,ncol(out)]
+save(IC, file=file.path(getwd(), '/Data/sim_lin_IC.RData'))
 ci <- apply(out,2,quantile,c(0.025,0.5,0.975))
+filtered_ci = ci[,(ncol(ci)-2*48+1):ncol(ci)]
+save(filtered_ci, file=file.path(getwd(), '/Data/sim_lin_ci.RData'))
 plot(temp_and_nee$datetime,ci[2,],type='n',xlab='date',ylim=c(-10,10),ylab="NEE")
 ecoforecastR::ciEnvelope(temp_and_nee$datetime,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
 points(temp_and_nee$datetime,temp_and_nee$observation,pch="+",cex=0.5)
 
-out.params <- as.matrix(params)
-write.csv(out.params, './Data/sim_lin_params.csv')
+params <- as.matrix(params)
+# write.csv(params, './Data/sim_lin_params.csv')
+save(params, file=file.path(getwd(), '/Data/sim_lin_params.RData'))
 
 # a more complicated version:
 # model <- ecoforecastR::ParseFixed("1 + AT + exp(-k*LAI*SW))
