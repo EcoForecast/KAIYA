@@ -180,9 +180,9 @@ save(IC, file=file.path(getwd(), '/Data/sim_lin_IC.RData'))
 ci <- apply(out,2,quantile,c(0.025,0.5,0.975))
 filtered_ci = ci[,(ncol(ci)-2*48+1):ncol(ci)]
 save(filtered_ci, file=file.path(getwd(), '/Data/sim_lin_ci.RData'))
-plot(temp_and_nee$datetime,ci[2,],type='n',xlab='date',ylim=c(-10,10),ylab="NEE")
-ecoforecastR::ciEnvelope(temp_and_nee$datetime,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
-points(temp_and_nee$datetime,temp_and_nee$observation,pch="+",cex=0.5)
+plot(combine_df$datetime,ci[2,],type='n',xlab='date',ylim=c(-10,10),ylab="NEE")
+ecoforecastR::ciEnvelope(combine_df$datetime,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+points(combine_df$datetime,combine_df$observation,pch="+",cex=0.5)
 
 params <- as.matrix(params)
 # write.csv(params, './Data/sim_lin_params.csv')
