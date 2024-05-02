@@ -35,28 +35,28 @@ noaa_historical_download <- function(site, var, reference_date, end_date){
     dplyr::collect()
 }
 
-noaa_forecast_download <- function(site, var, reference_date) {
-  endpoint <- "data.ecoforecast.org"
-  bucket <- glue::glue("neon4cast-drivers/noaa/gefs-v12/stage2/parquet/0/{reference_date}")
-  s3 <- arrow::s3_bucket(bucket, endpoint_override = endpoint, anonymous = TRUE)
-
-  ds <- arrow::open_dataset(s3)
-
-  forecast_date <- as_datetime(reference_date)
-
-  # Filter, select, and process data
-  ds %>%
-    dplyr::filter(site_id == site,
-                  datetime >= forecast_date,
-                  variable == var) %>%
-    dplyr::select(datetime, prediction, parameter) %>%
-    dplyr::group_by(datetime) %>%
-    dplyr::summarize(mean_prediction = mean(prediction-273.15, na.rm = TRUE), 
-                     sd_prediction = sd(prediction-273.15, na.rm = TRUE), 
-                     ensemble=max(parameter)) %>%
-    dplyr::select(datetime, mean_prediction, sd_prediction, ensemble) %>%
-    dplyr::collect()
-}
+# noaa_forecast_download <- function(site, var, reference_date) {
+#   endpoint <- "data.ecoforecast.org"
+#   bucket <- glue::glue("neon4cast-drivers/noaa/gefs-v12/stage2/parquet/0/{reference_date}")
+#   s3 <- arrow::s3_bucket(bucket, endpoint_override = endpoint, anonymous = TRUE)
+# 
+#   ds <- arrow::open_dataset(s3)
+# 
+#   forecast_date <- as_datetime(reference_date)
+# 
+#   # Filter, select, and process data
+#   ds %>%
+#     dplyr::filter(site_id == site,
+#                   datetime >= forecast_date,
+#                   variable == var) %>%
+#     dplyr::select(datetime, prediction, parameter) %>%
+#     dplyr::group_by(datetime) %>%
+#     dplyr::summarize(mean_prediction = mean(prediction-273.15, na.rm = TRUE), 
+#                      sd_prediction = sd(prediction-273.15, na.rm = TRUE), 
+#                      ensemble=max(parameter)) %>%
+#     dplyr::select(datetime, mean_prediction, sd_prediction, ensemble) %>%
+#     dplyr::collect()
+# }
 
 
 # variables included in the NOAA weather dataset
@@ -70,3 +70,29 @@ noaa_forecast_download <- function(site, var, reference_date) {
 #                "eastward_wind")
 
 # temp = weather_historical_download("2024-03-01", "HARV")
+
+noaa_forecast_download <- function(site, var, reference_date){
+  forecast_date <- as_datetime(reference_date)
+  noaa_date <- forecast_date - lubridate::days(1)  #Need to use yesterday's NOAA forecast because today's is not available yet
+  ## connect to data
+  df_future <- neon4cast::noaa_stage2(cycle = 0,
+                                      version = "v12",
+                                      endpoint = NA,
+                                      verbose = TRUE,
+                                      start_date = noaa_date)
+  
+  ## filter available forecasts by date and variable
+  met_future <- df_future |> 
+    dplyr::filter(site_id == site,
+                  datetime >= forecast_date,
+                  variable == var) %>%
+    dplyr::select(datetime, prediction, parameter) %>%
+    dplyr::group_by(datetime) %>%
+    dplyr::summarize(mean_prediction = mean(prediction-273.15, na.rm = TRUE), 
+                     sd_prediction = sd(prediction-273.15, na.rm = TRUE), 
+                     ensemble=max(parameter)) %>%
+    dplyr::select(datetime, mean_prediction, sd_prediction, ensemble) %>%
+    dplyr::collect()
+  
+  return(met_future)
+}
