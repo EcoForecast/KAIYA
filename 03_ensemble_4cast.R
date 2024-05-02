@@ -23,7 +23,7 @@ if(file.exists('./Data/sim_lin_ci.RData')) {
 if(file.exists("01_NOAA_dwn.R"))
   source("01_NOAA_dwn.R")
 
-temp_forecast = noaa_forecast_download("HARV","air_temperature",Sys.Date()-80)
+temp_forecast = noaa_forecast_download("HARV","air_temperature",Sys.Date()-1)
 temp_forecast$datetime = as_datetime(temp_forecast$datetime)
 
 #### Convert hourly to half-hourly
