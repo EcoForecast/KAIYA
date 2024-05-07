@@ -9,7 +9,7 @@ submit_forecast <- function(forecast,team_info,submit=FALSE){
   
   #Forecast output file name in standards requires for Challenge.  
   # csv.gz means that it will be compressed
-  forecast_file <- paste0("terrestrial","-",date(min(forecast$reference_datetime)),"-",team_info$team_name,".csv.gz")
+  forecast_file <- paste0("terrestrial_30min","-",date(min(forecast$reference_datetime)),"-",team_info$team_name,".csv.gz")
   
   ## final format tweaks for submission
   # forecast = forecast |> mutate(model_id = team_info$team_name, family="ensemble") |>
@@ -28,7 +28,7 @@ submit_forecast <- function(forecast,team_info,submit=FALSE){
     forecast = list(
       model_description = list(
         forecast_model_id =  system("git rev-parse HEAD", intern=TRUE), ## current git SHA
-        name = "Air temperature to water temperature linear regression plus assume saturated oxygen", 
+        name = "Our forecast uses a simple linear model with a temperature driver to produce 30-minute forecasts of net ecosystem exchange (NEE) of CO2 at terrestrial NEON sites", 
         type = "empirical",  
         repository = "https://github.com/EcoForecast/KAIYA"   ## put your REPO here *******************
       ),
