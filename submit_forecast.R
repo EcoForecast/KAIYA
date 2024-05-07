@@ -28,7 +28,7 @@ submit_forecast <- function(forecast,team_info,submit=FALSE){
     forecast = list(
       model_description = list(
         forecast_model_id =  system("git rev-parse HEAD", intern=TRUE), ## current git SHA
-        name = "Air temperature to water temperature linear regression plus assume saturated oxygen", 
+        name = "Our forecast uses a simple linear model with a temperature driver to produce 30-minute forecasts of net ecosystem exchange (NEE) of CO2 at terrestrial NEON sites", 
         type = "empirical",  
         repository = "https://github.com/EcoForecast/KAIYA"   ## put your REPO here *******************
       ),
