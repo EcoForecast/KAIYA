@@ -9,7 +9,7 @@ submit_forecast <- function(forecast,team_info,submit=FALSE){
   
   #Forecast output file name in standards requires for Challenge.  
   # csv.gz means that it will be compressed
-  forecast_file <- paste0("terrestrial","-",date(min(forecast$reference_datetime)),"-",team_info$team_name,".csv.gz")
+  forecast_file <- paste0("terrestrial_30min","-",date(min(forecast$reference_datetime)),"-",team_info$team_name,".csv.gz")
   
   ## final format tweaks for submission
   # forecast = forecast |> mutate(model_id = team_info$team_name, family="ensemble") |>
