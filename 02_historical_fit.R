@@ -116,7 +116,6 @@ if(file.exists("01_NOAA_dwn.R"))
   source("01_NOAA_dwn.R")
 
 temp_data = noaa_historical_download("HARV","air_temperature",Sys.Date()-80-365, Sys.Date()-80) # dated this way in order to get all data a year before today, this can be changed
-SW_data = noaa_historical_download("HARV","surface_downwelling_shortwave_flux_in_air",Sys.Date()-80-365, Sys.Date()-80) # dated this way in order to get all data a year before today, this can be changed
 
 ## the following is leftover from when we were using EFI temp data
 # temp_data = temp_data[c('mean_prediction', 'sd_prediction')] |> rename(
@@ -136,23 +135,10 @@ for(i in 1:length(temp_data$datetime)){
   sd_predictions = c(sd_predictions, temp_data$sd_prediction[i], temp_data$sd_prediction[i])
 }
 
-
-for(i in 1:length(SW_data$datetime)){
-  semi_hourly_times = c(semi_hourly_times, lubridate::as_datetime(SW_data$datetime[i]), lubridate::as_datetime(SW_data$datetime[i]+30*60))
-  mean_predictions = c(mean_predictions, SW_data$mean_prediction[i], SW_data$mean_prediction[i])
-  sd_predictions = c(sd_predictions, SW_data$sd_prediction[i], SW_data$sd_prediction[i])
-}
-
 temp_half_hour = data.frame(
   datetime = lubridate::as_datetime(semi_hourly_times),
   mean_prediction = mean_predictions,
   sd_prediction = sd_predictions
-)
-
-SW_half_hour = data.frame(
-  datetime = lubridate::as_datetime(semi_hourly_times),
-  mean_prediction2 = mean_predictions,
-  sd_prediction2 = sd_predictions
 )
 
 # let's create a dataset that includes all of our variables that we can call it when fitting our model with JAGS
@@ -163,13 +149,13 @@ SW_half_hour = data.frame(
 
 # let's match up the dates from the NEON temp data and the nee observations
 # temp_and_nee <- merge(temp_half_hour,targets_nee,by='datetime')
-combine_df <- merge(temp_half_hour,targets_nee,SW_half_hour,by='datetime')
+combine_df <- merge(temp_half_hour,targets_nee,by='datetime')
 
 # the following was a way to filter the data by year, if needed
 # > filter(datetime>lubridate::date('2022-01-01'))
 # just_2022 <- dplyr::filter(temp_and_nee,format(datetime, "%Y") == "2022")
 
-data <- list(datetime=combine_df$datetime,nee=combine_df$observation,temp=combine_df$mean_prediction,SW=combine_df$mean_prediction2,   ## data
+data <- list(datetime=combine_df$datetime,nee=combine_df$observation,temp=combine_df$mean_prediction,     ## data
              nee_ic=combine_df$observation[1],tau_ic=100, ## initial condition prior
              a_obs=1,r_obs=1,           ## obs error prior
              a_add=1,r_add=1            ## process error prior
@@ -177,7 +163,7 @@ data <- list(datetime=combine_df$datetime,nee=combine_df$observation,temp=combin
 save(combine_df, file=file.path(getwd(), '/Data/combined.RData'))
 
 # now, let's use the ecoforecast package to run JAGS with a simple version of our model
-nee.out <- ecoforecastR::fit_dlm(model=list(obs="nee",fixed="~ 1 + X + temp + SW",n.iter=10000),data)
+nee.out <- ecoforecastR::fit_dlm(model=list(obs="nee",fixed="~ 1 + X + temp",n.iter=10000),data)
 strsplit(nee.out$model,"\n",fixed = TRUE)[[1]] ## so we can verify what the JAGS code should look like
 params <- window(nee.out$params,start=5000) ## remove burn-in
 predicts <- window(nee.out$predict, start=5000)
