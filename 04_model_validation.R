@@ -1,10 +1,11 @@
 ## load libraries
+install.packages("plotrix",repos = "http://cran.us.r-project.org")
 library("plotrix")
 library(rpart)
-library(randomForest)
 library(scoringRules)
+library(ecoforecastR)
 library(dplyr)
-library(lubridate)
+library(tidyverse)
 
 ## Data downloads
 TODAYS_DATE = Sys.Date()-365
