@@ -87,11 +87,12 @@ noaa_forecast_download <- function(site, var, reference_date){
                   datetime >= forecast_date,
                   variable == var) %>%
     dplyr::select(datetime, prediction, parameter) %>%
-    dplyr::group_by(datetime) %>%
-    dplyr::summarize(mean_prediction = mean(prediction-273.15, na.rm = TRUE), 
-                     sd_prediction = sd(prediction-273.15, na.rm = TRUE), 
-                     ensemble=max(parameter)) %>%
-    dplyr::select(datetime, mean_prediction, sd_prediction, ensemble) %>%
+    # dplyr::group_by(datetime) %>%
+    # dplyr::summarize(mean_prediction = mean(prediction-273.15, na.rm = TRUE),
+    #                  sd_prediction = sd(prediction-273.15, na.rm = TRUE),
+    #                  ensemble=max(parameter)
+    #                  ) %>%
+    # dplyr::select(datetime, mean_prediction, sd_prediction, ensemble) %>%
     dplyr::collect()
   
   return(met_future)

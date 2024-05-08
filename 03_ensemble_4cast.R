@@ -25,27 +25,35 @@ if(file.exists("01_NOAA_dwn.R"))
 
 temp_forecast = noaa_forecast_download("HARV","air_temperature",Sys.Date()-1)
 temp_forecast$datetime = as_datetime(temp_forecast$datetime)
+n_ensemble = max(temp_forecast$parameter)+1
 
-#### Convert hourly to half-hourly
-semi_hourly_times = c()
-mean_predictions = c()
-sd_predictions = c()
-for(i in 1:length(temp_forecast$datetime)){
-  semi_hourly_times = c(semi_hourly_times, lubridate::as_datetime(temp_forecast$datetime[i]), lubridate::as_datetime(temp_forecast$datetime[i]+30*60))
-  mean_predictions = c(mean_predictions, temp_forecast$mean_prediction[i], temp_forecast$mean_prediction[i])
-  sd_predictions = c(sd_predictions, temp_forecast$sd_prediction[i], temp_forecast$sd_prediction[i])
+temp_ensemble <- matrix(NA, n_ensemble, (nrow(temp_forecast)/n_ensemble*2))
+for(i in 1:n_ensemble){
+  temp_df = temp_forecast[temp_forecast$parameter==(i-1),]
+  ordered_df = temp_df[order(temp_df$datetime), ]
+  temp_ensemble[i,] <- rep(ordered_df$prediction-273.15, each=2) # hourly to half-hourly
 }
 
-temp_forecast = data.frame(
-  datetime = lubridate::as_datetime(semi_hourly_times),
-  mean_prediction = mean_predictions,
-  sd_prediction = sd_predictions
-)
+# #### Convert hourly to half-hourly
+# semi_hourly_times = c()
+# mean_predictions = c()
+# sd_predictions = c()
+# for(i in 1:length(temp_forecast$datetime)){
+#   semi_hourly_times = c(semi_hourly_times, lubridate::as_datetime(temp_forecast$datetime[i]), lubridate::as_datetime(temp_forecast$datetime[i]+30*60))
+#   mean_predictions = c(mean_predictions, temp_forecast$mean_prediction[i], temp_forecast$mean_prediction[i])
+#   sd_predictions = c(sd_predictions, temp_forecast$sd_prediction[i], temp_forecast$sd_prediction[i])
+# }
+# 
+# temp_forecast = data.frame(
+#   datetime = lubridate::as_datetime(semi_hourly_times),
+#   mean_prediction = mean_predictions,
+#   sd_prediction = sd_predictions
+# )
 
 NT = 48
-time = 1:(NT*2 + nrow(temp_forecast))    ## total time
+time = 1:(NT*2 + ncol(temp_ensemble))    ## total time
 time1 = 1:(NT*2)       ## calibration period
-time2 = (NT*2+1):(NT*2 + nrow(temp_forecast))   ## forecast period
+time2 = (NT*2+1):(NT*2 + ncol(temp_ensemble))   ## forecast period
 ylim=c(-20,20)
 Nmc = 1000         ## set number of Monte Carlo draws
 N.cols <- c("black","red","green","blue","orange") ## set colors
@@ -60,9 +68,9 @@ plot.run <- function(){
 plot.run()
 
 forecastN <- function(IC, temperature, intercept, betax, betatemp, Q=0, n=Nmc){
-  N <- matrix(NA,n,(nrow(temp_forecast)))  ## storage
+  N <- matrix(NA,n,(ncol(temp_ensemble)))  ## storage
   Nprev <- IC           ## initialize
-  for(t in 1:(nrow(temp_forecast))){
+  for(t in 1:(ncol(temp_ensemble))){
     mu = intercept + Nprev*(1+betax) + temperature[,t]*betatemp
     N[,t] <- rnorm(n,mu,Q)                         ## predict next step
     Nprev <- N[,t]                                  ## update IC
@@ -71,11 +79,7 @@ forecastN <- function(IC, temperature, intercept, betax, betatemp, Q=0, n=Nmc){
 }
 
 ## calculate mean of all inputs
-temp_ensemble <- matrix(NA, 2000, (nrow(temp_forecast)))
-for(i in 1:(nrow(temp_forecast))){
-  temp_ensemble[,i] <- rnorm(50, temp_forecast$mean_prediction[i], temp_forecast$sd_prediction[i])
-}
-temp.mean <- matrix(apply(temp_ensemble, 2, mean),1,(nrow(temp_forecast)))
+temp.mean <- matrix(apply(temp_ensemble, 2, mean),1,(nrow(temp_forecast)/n_ensemble*2))
 ## parameters
 param.mean <- apply(params,2,mean)
 load('./Data/sim_lin_IC.RData')
@@ -154,22 +158,27 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-result_df <- data.frame(matrix(ncol = 10, nrow = 0))
-col_names = c('project_id','duration','model_id', 'datetime', 'reference_datetime', 'site_id', 'family', 'parameter', 'variable', 'prediction')
-colnames(result_df) <- col_names
-
-for(i in 1:(nrow(temp_forecast))){
-  for(parameter in 1:30){
+result_df <- data.frame(matrix(ncol = 9, nrow = 0))
+n_pred = ncol(temp_ensemble)
+predictions = c()
+for(parameter in 1:Nmc){
+  for(i in 1:n_pred){
     result_df[nrow(result_df)+1,]=c('neon4cast','PT30','kaiya', 
-                                    as.character(temp_forecast$datetime[i]), 
+                                    as.character(lubridate::as_datetime(min(temp_forecast$datetime)+30*60*(i-1))),
                                     as.character(combine_df$datetime[nrow(combine_df)]), 
                                     'HARV', 
                                     'ensemble',
                                     parameter,
-                                    'nee',
-                                    sample(N.IPDE[,i], 1))
+                                    'nee'
+                                    )
   }
+  i_row = sample(1:Nmc, 1)
+  predictions=c(predictions, N.IPDE[i_row,])
 }
+result_df = cbind(result_df, predictions)
+col_names = c('project_id','duration','model_id', 'datetime', 'reference_datetime', 'site_id', 'family', 'parameter', 'variable', 'prediction')
+colnames(result_df) <- col_names
+
 
 team_info <- list(team_name = "KAIYA",
                   team_list = list(

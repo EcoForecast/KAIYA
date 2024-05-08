@@ -115,7 +115,7 @@ if (file.exists("01_EFI_dwn.R")) {
 if(file.exists("01_NOAA_dwn.R"))
   source("01_NOAA_dwn.R")
 
-temp_data = noaa_historical_download("HARV","air_temperature",Sys.Date()-80-365, Sys.Date()-80) # dated this way in order to get all data a year before today, this can be changed
+temp_data = noaa_historical_download("HARV","air_temperature",Sys.Date()-365, Sys.Date()-1) # dated this way in order to get all data a year before today, this can be changed
 
 ## the following is leftover from when we were using EFI temp data
 # temp_data = temp_data[c('mean_prediction', 'sd_prediction')] |> rename(
@@ -167,10 +167,10 @@ nee.out <- ecoforecastR::fit_dlm(model=list(obs="nee",fixed="~ 1 + X + temp",n.i
 strsplit(nee.out$model,"\n",fixed = TRUE)[[1]] ## so we can verify what the JAGS code should look like
 params <- window(nee.out$params,start=5000) ## remove burn-in
 predicts <- window(nee.out$predict, start=5000)
-plot(params)
+# plot(params)
 summary(params)
 cor(as.matrix(params))
-pairs(as.matrix(params))
+# pairs(as.matrix(params))
 
 # now, we'll plot the data with the model and ci:
 ## confidence interval
