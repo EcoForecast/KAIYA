@@ -1,7 +1,10 @@
 ## load libraries
-library("plotrix")
+install.packages("plotrix")
+install.packages("rpart")
+install.packages("scoringRules")
+library(plotrix)
 library(rpart)
-library(randomForest)
+# library(randomForest)
 library(scoringRules)
 library(dplyr)
 library(lubridate)
