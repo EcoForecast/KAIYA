@@ -141,42 +141,6 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-# Model Validation
-
-if(file.exists("04_model_validation.R"))
-  source("04_model_validation.R")
-knitr::kable(stats)
-
-plot(E,O,pch=".",xlab="ensemble",ylab='observed',main='NEE (umol/m2/sec)')
-abline(0,1,col=2,lwd=2)
-abline(NEE.ens.fit,col=3,lwd=3,lty=2)
-legend("bottomright",legend=c('obs','1:1','reg'),col=1:3,lwd=3)
-
-## Taylor diagrams: Ensemble
-taylor.diagram(ref=O,model=E,normalize=TRUE,ref.sd=TRUE)
-for(i in 1:nrow(NEE.ens)){
-  taylor.diagram(ref=O,model=NEE.ens[i,qaqc],col=2,pch=".",add=TRUE,normalize=TRUE)
-}
-rlaplace = function(n,mu,b){
-  return(mu + ifelse(rbinom(n,1,0.5),1,-1)*rexp(n,b))
-}
-beta = ifelse(O > 0,0.62+0.63*O,1.42-0.19*O) #Heteroskedasticity, parameters from Richardson et al 2006
-for(i in 1:200){
-  x = rlaplace(length(O),O,beta)
-  taylor.diagram(ref=O,model=x,col=3,add=TRUE,normalize=TRUE)
-}
-legend("topright",legend=c("ens","obsUncert"),col=2:3,pch=20,cex=0.7)
-
-plot(pval)   ## quantile 'residuals'
-hist(pval,probability=TRUE) ## quantile distribution (should be flat)
-
-mean(crps)
-plot(crps)
-hist(crps)
-
-plot(time.of.day,crps.diurnal)
-plot(O,crps)
-
 
 # submission = false for now
 source('./submit_forecast.R')
