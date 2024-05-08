@@ -2,12 +2,16 @@
 install.packages("plotrix")
 install.packages("rpart")
 install.packages("scoringRules")
+install.packages("ecoforecastR")
+install.packages("tidyverse")
 library(plotrix)
 library(rpart)
 # library(randomForest)
 library(scoringRules)
 library(dplyr)
 library(lubridate)
+library(tidyverse)
+library(ecoforecastR)
 
 ## Data downloads
 TODAYS_DATE = Sys.Date()-365
