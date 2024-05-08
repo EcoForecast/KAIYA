@@ -143,8 +143,8 @@ lines(time2,N.I.ci[2,],lwd=0.5)
 
 # Model Validation
 
-if(file.exists("O4_model_validation.R"))
-  source("03_ensemble_4cast.R")
+if(file.exists("04_model_validation.R"))
+  source("04_model_validation.R")
 knitr::kable(stats)
 
 plot(E,O,pch=".",xlab="ensemble",ylab='observed',main='NEE (umol/m2/sec)')
