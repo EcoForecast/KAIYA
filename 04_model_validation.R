@@ -231,7 +231,7 @@ legend("bottomright",legend=c('obs','1:1','reg'),col=1:3,lwd=3)
 
 taylor.diagram(ref=O,model=E,normalize=TRUE,ref.sd=TRUE)
 for(i in 1:nrow(NEE.ens)){
-  taylor.diagram(ref=O,model=-NEE.ens[i,qaqc],col=2,pch=".",add=TRUE,normalize=TRUE)
+  taylor.diagram(ref=O,model=NEE.ens[i,qaqc],col=2,pch=".",add=TRUE,normalize=TRUE)
 }
 
 ## add data uncertainty
