@@ -30,48 +30,46 @@ team_info <- list(team_name = "KAIYA",
 )
 
 ## Data downloads
-
 TODAYS_DATE = Sys.Date()
+siteid = 'HARV'
 
-## LAI and FPAR
-
-if(file.exists("01_LAI_FPAR_dwn.R"))      
-  source("01_LAI_FPAR_dwn.R")
-
-lai_download(TODAYS_DATE-30)
-fpar_download(TODAYS_DATE-30)
-
-## Temperature
-
-if(file.exists("neontempdownload.R"))
-  source("neontempdownload.R")
-
-temp_data = temp_download(TODAYS_DATE)
-
-# Save data to a file
-temp_file = paste("NEON.Temp.","2018-01.",TODAYS_DATE,".HARV.RData", sep='')
-file_path = file.path(getwd(), temp_file)
-
-if(file.exists(file_path)){
-}else{
-save(subset,file=file_path)
-}
-
+# ## LAI and FPAR
+# if(file.exists("01_LAI_FPAR_dwn.R")){
+#   source("01_LAI_FPAR_dwn.R")
+#   lai_download(TODAYS_DATE-30)
+#   fpar_download(TODAYS_DATE-30)
+# } 
+  
 ## EFI target variable
-if(file.exists("01_EFI_dwn.R"))
+if(file.exists("01_EFI_dwn.R")){
   source("01_EFI_dwn.R")
-
-targets = download_targets()
-targets_nee = targets |> filter(variable=='nee')
-save(targets_nee, file = './Data/nee.RData')
-
-site_meta = download_site_meta()
-save(site_meta, file = './Data/site.RData')
-
+  targets = download_targets()
+  targets_nee = targets |> filter(variable=='nee') |> filter(site_id==siteid)
+  targets_nee = targets_nee[order(targets_nee$datetime),]
+  save(targets_nee, file = './Data/nee.RData')
+  site_meta = download_site_meta()
+  save(site_meta, file = './Data/site.RData')
+  
+  plot(targets_nee$datetime, targets_nee$observation, type='l', 
+       main='NEE Time Series', xlab = 'Date', ylab = 'NEE')
+}
+  
 ## NOAA meteorological data
-if(file.exists("01_NOAA_dwn.R"))
+if(file.exists("01_NOAA_dwn.R")){
   source("01_NOAA_dwn.R")
-
+  
+  temp_data = noaa_historical_download(siteid,"air_temperature",TODAYS_DATE-365, TODAYS_DATE)
+  temp_data = temp_data[order(temp_data$datetime),]
+  save(temp_data, file='./Data/temp.hist.RData')
+  
+  plot(temp_data$datetime, temp_data$mean_prediction, 'l',
+       main = 'Air Temperature', xlab = 'Date', ylab = 'Air temperature')
+  
+  temp_forecast = noaa_forecast_download(siteid,"air_temperature",
+                                         as_date(max(targets_nee$datetime))+1)
+  save(temp_data, file='./Data/temp.4cast.RData')
+}
+  
 # download historical met data for HARV as a test
 
 # siteid = "HARV"
@@ -143,5 +141,7 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-
+# submission = false for now
+source('./submit_forecast.R')
+submit_forecast(result_df,team_info,submit=TRUE)
 
