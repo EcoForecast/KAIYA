@@ -1,5 +1,5 @@
 ## load libraries
-# install.packages("plotrix")
+install.packages("plotrix",repos = "http://cran.us.r-project.org")
 library("plotrix")
 library(rpart)
 library(scoringRules)
