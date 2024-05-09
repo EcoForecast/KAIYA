@@ -185,8 +185,8 @@ lines(time2,N.I.ci[2,],lwd=0.5)
 
 
 ### Model validation
-if(file.exists('/Data/NI_randomwalk.RData')){
-  load('/Data/NI_randomwalk.RData')
+if(file.exists('./Data/NI_randomwalk.RData')){
+  load('./Data/NI_randomwalk.RData')
 }else if(file.exists("04_random_walk_comparison.R")) {
   source("04_random_walk_comparison.R")
 }
