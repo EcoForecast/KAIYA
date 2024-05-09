@@ -1,0 +1,20 @@
+name: Model Validation Workflow
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 20 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: eco4cast/rocker-neon4cast
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
+      - name: Run automatic prediction file
+        run: Rscript 04_model_validation.R
