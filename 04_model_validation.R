@@ -185,11 +185,20 @@ lines(time2,N.I.ci[2,],lwd=0.5)
 
 
 ### Model validation
+if(file.exists('/Data/NI_randomwalk.RData')){
+  load('/Data/NI_randomwalk.RData')
+}else if(file.exists("04_random_walk_comparison.R")) {
+  source("04_random_walk_comparison.R")
+}
 
-# match dates from data and results
+# define results
 # NEE.ens.bar <- result_df %>% select(parameter,prediction,datetime) %>% mutate(ensemble = as.numeric(parameter),nee = as.numeric(prediction)) %>% group_by(datetime) %>% summarize(nee = -mean(nee))
 NEE.ens <- N.I
-NEE.ens.bar <- N.I.ci[2,]
+# NEE.ens.bar <- N.I.ci[2,]
+NEE.ens.bar <- apply(t(N.I[,]),1,mean)
+
+NEE.rw <- N.I.rw
+NEE.rw.bar <- apply(t(N.I.rw[,]),1,mean)
 # nee_data <- targets_nee %>% filter(datetime >= min(ordered_df$datetime) & datetime <= max(ordered_df$datetime))
 
 ## so, it turns out that there are some data missing from the targets_nee dataset
@@ -207,10 +216,12 @@ nee_data <- merge(targets_nee,forecast_half_hour,by='datetime',all.y=TRUE)
 ## Calculate ensemble means & apply QAQC
 qaqc <- complete.cases(nee_data)
 E <- NEE.ens.bar[qaqc]
+R <- NEE.rw.bar[qaqc]
 O <- nee_data$observation[qaqc]
 
 ## Model vs obs regressions
 NEE.ens.fit = lm(O ~ E)
+NEE.rw.fit <- lm(O ~ R)
 
 ## performance stats
 stats = as.data.frame(matrix(NA,4))
@@ -228,12 +239,20 @@ abline(0,1,col=2,lwd=2)
 abline(NEE.ens.fit,col=3,lwd=3,lty=2)
 legend("bottomright",legend=c('obs','1:1','reg'),col=1:3,lwd=3)
 
+plot(R,O,pch=".",xlab="random walk",ylab='observed',main='NEE (umol/m2/sec)')
+abline(0,1,col=2,lwd=2)
+abline(NEE.rw.fit,col=3,lwd=3,lty=2)
+legend("bottomright",legend=c('obs','1:1','reg'),col=1:3,lwd=3)
+
 ## Taylor diagrams: Ensemble
 
-taylor.diagram(ref=O,model=E,normalize=TRUE,ref.sd=TRUE)
-for(i in 1:nrow(NEE.ens)){
-  taylor.diagram(ref=O,model=NEE.ens[i,qaqc],col=2,pch=".",add=TRUE,normalize=TRUE)
+taylor.diagram(ref=O,model=E,normalize=TRUE,ref.sd=TRUE,col=2)
+
+for(i in 1:NEE.ens[i,qaqc]){
+  taylor.diagram(ref=O,model=NEE.ens[i,qaqc],pch=".",pcex=1,add=TRUE,normalize=TRUE)
 }
+
+taylor.diagram(ref=O,model=R,normalize=TRUE,add=TRUE,ref.sd=TRUE,col=3)
 
 ## add data uncertainty
 rlaplace = function(n,mu,b){
@@ -242,9 +261,9 @@ rlaplace = function(n,mu,b){
 beta = ifelse(O > 0,0.62+0.63*O,1.42-0.19*O) #Heteroskedasticity, parameters from Richardson et al 2006
 for(i in 1:200){
   x = rlaplace(length(O),O,beta)
-  taylor.diagram(ref=O,model=x,col=3,add=TRUE,normalize=TRUE)
+  taylor.diagram(ref=O,model=x,col=4,add=TRUE,normalize=TRUE)
 }
-legend("topright",legend=c("ens","obsUncert"),col=2:3,pch=20,cex=0.7)
+legend("topright",legend=c("ens","rw","obsUncert"),col=2:5,pch=20,cex=0.7)
 
 
 # Bayesian p-values
@@ -253,25 +272,41 @@ pval = 0
 for(i in 1:ncol(NEE.ens)){
   pval[i] = sum(O[i] > -NEE.ens[,i])/nrow(NEE.ens)  ## quantiles of the particle filter
 }
-plot(pval)   ## quantile 'residuals'
+plot(pval,main='pval, ens')   ## quantile 'residuals'
 hist(pval,probability=TRUE) ## quantile distribution (should be flat)
+
+for(i in 1:ncol(NEE.ens)){
+  pval[i] = sum(O[i] > -NEE.rw[,i])/nrow(NEE.rw)  ## quantiles of the particle filter
+}
+plot(pval,main='pval, rw')   ## quantile 'residuals'
+hist(pval,probability=TRUE,main="pval_rw") ## quantile distribution (should be flat)
 
 ### CRPS
 # note: I attempted to run this code without performing qaqc, but since the data has missing values, I had to do the qaqc indexed matrices
 O <- O[qaqc]
-crps = scoringRules::crps_sample(y = O, dat = t(NEE.ens[,qaqc]))
-mean(crps)
-plot(crps)
-hist(crps)
+crps.ens = scoringRules::crps_sample(y = O, dat = t(NEE.ens[,qaqc]))
+mean(crps.ens)
+plot(crps.ens)
+hist(crps.ens)
+
+crps.rw = scoringRules::crps_sample(y = O, dat = t(NEE.rw[,qaqc]))
+mean(crps.rw)
+plot(crps.rw)
+hist(crps.rw)
 
 
 ### diurnal cycle of model skill
-crps.diurnal = tapply(crps,lubridate::minute(nee_data$datetime[qaqc]),mean)
-time.of.day = as.numeric(names(crps.diurnal))
-plot(time.of.day,crps.diurnal)
+crps.diurnal.ens = tapply(crps.ens,lubridate::minute(nee_data$datetime[qaqc]),mean)
+time.of.day = as.numeric(names(crps.diurnal.ens))
+plot(time.of.day,crps.diurnal.ens)
+
+crps.diurnal.rw = tapply(crps.rw,lubridate::minute(nee_data$datetime[qaqc]),mean)
+time.of.day = as.numeric(names(crps.diurnal.rw))
+plot(time.of.day,crps.diurnal.rw)
 
 ## CRPS skill as a function of observed NEE
-plot(O,crps)
+plot(O,crps.ens)
+plot(O,crps.rw)
 
 
 # ## CART residual mining
